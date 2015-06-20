@@ -1,20 +1,22 @@
 import Data.Matrix
 import Data.Maybe
 import Data.List
+import Data.Char
 import Control.Monad
 import qualified Data.Vector
 
 type Puzzle = Matrix (Maybe Int)
 
-puzzle = fromList 9 9 [Just 7, Just 5, Nothing, Just 8, Just 9, Just 1, Nothing, Nothing, Nothing,
-                    Nothing, Nothing, Just 1, Just 6, Nothing, Nothing, Just 9, Just 8, Nothing,
-                    Nothing, Just 9, Nothing, Nothing, Nothing, Nothing, Just 7, Nothing, Nothing,
-                    Just 1, Just 4, Nothing, Nothing, Just 5, Nothing, Just 3, Just 7, Nothing,
-                    Nothing, Just 7, Nothing, Nothing, Just 3, Nothing, Just 6, Just 1, Just 4,
-                    Nothing, Nothing, Just 9, Nothing, Nothing, Just 4, Just 5, Nothing, Nothing,
-                    Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Nothing, Just 4, Nothing,
-                    Nothing, Just 6, Nothing, Just 3, Nothing, Just 2, Just 1, Nothing, Nothing,
-                    Just 2, Nothing, Just 3, Nothing, Nothing, Just 9, Nothing, Just 5, Nothing]
+puzzle = puzzleFromLines
+          ["7 5 - 8 9 1 - - -",
+           "- - 1 6 - - 9 8 -",
+           "- 9 - - - - 7 - -",
+           "1 4 - - 5 - 3 7 -",
+           "- 7 - - 3 - 6 1 4",
+           "- - 9 - - 4 5 - -",
+           "- - - - - - - 4 -",
+           "- 6 - 3 - 2 1 - -",
+           "2 - 3 - - 9 - 5 -"]
 
 showPuzzle = unlines . (map showRow) . toLists
 
@@ -31,6 +33,19 @@ solvePuzzle p = do
               then return $ Just p
               else
                 findSolution $ map solvePuzzle $ genSinglePermutations p
+
+readPuzzle :: IO Puzzle
+readPuzzle = do
+  lines <- sequence $ take 9 $ repeat getLine
+  return $ puzzleFromLines lines
+
+puzzleFromLines lines =
+  let chars = filter (not . isSpace) $ unwords lines
+  in
+    fromList 9 9 $ map toCell chars
+
+toCell :: Char -> Maybe Int
+toCell n = if isHexDigit n then Just (digitToInt n) else Nothing
 
 findSolution :: [IO (Maybe Puzzle)] -> IO (Maybe Puzzle)
 findSolution [] = return Nothing
@@ -84,4 +99,7 @@ listPairs = [(x, y) | x <- [1..9], y <- [1..9] ]
 setCellTo :: Puzzle -> (Int, Int) -> Int -> Puzzle
 setCellTo p loc value = setElem (Just value) loc p
 
+-- main = do
+--   p <- readPuzzle
+--   putStrLn $ showPuzzle p
 main = solvePuzzle puzzle
