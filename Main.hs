@@ -2,7 +2,6 @@ import Data.Matrix
 import Data.Maybe
 import Data.List
 import Control.Monad
-import System.IO.Unsafe as Unsafe
 import qualified Data.Vector
 
 type Puzzle = Matrix (Maybe Int)
@@ -48,8 +47,9 @@ genSinglePermutations p =
     editLocation = findFirstEmpty p
     permutations = map (setCellTo p editLocation) [1..9]
 
-isFull p =
-  isNothing $ find isNothing $ toList p
+isFull :: Puzzle -> Bool
+isFull =
+  all isJust . toList
 
 checkValidity :: (Int, Int) -> Puzzle -> Bool
 checkValidity (x, y) p =
