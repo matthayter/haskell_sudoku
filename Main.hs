@@ -32,7 +32,7 @@ solvePuzzle p = do
             if isFull p
               then return $ Just p
               else
-                findSolution $ map solvePuzzle $ genSinglePermutations p
+                sequenceUntilJust $ map solvePuzzle $ genSinglePermutations p
 
 readPuzzle :: IO Puzzle
 readPuzzle = do
@@ -47,14 +47,17 @@ puzzleFromLines lines =
 toCell :: Char -> Maybe Int
 toCell n = if isHexDigit n then Just (digitToInt n) else Nothing
 
-findSolution :: [IO (Maybe Puzzle)] -> IO (Maybe Puzzle)
-findSolution [] = return Nothing
-findSolution (x:xs) =
-  do
-    thisSol <- x
-    if isJust thisSol
-    then return thisSol
-    else findSolution xs
+-- Special case of sequenceUntilJust to collapse the Maybe (Maybe a)
+sequenceUntilJust :: Monad m => [m (Maybe b)] -> m (Maybe b)
+sequenceUntilJust xs = join <$> (sequenceUntil isJust xs)
+
+sequenceUntil :: Monad m => (a -> Bool) -> [m a] -> m (Maybe a)
+sequenceUntil _ [] = return Nothing
+sequenceUntil test (x:xs) = do
+                            thisResult <- x
+                            if test thisResult
+                            then return (Just thisResult)
+                            else sequenceUntil test xs
 
 genSinglePermutations p =
   filter (checkValidity editLocation) $ permutations
