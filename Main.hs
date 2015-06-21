@@ -3,7 +3,7 @@ import Data.Maybe
 import Data.List
 import Data.Char
 import Control.Monad
-import qualified Data.Vector
+import qualified Data.Vector as Vec
 
 type Puzzle = Matrix (Maybe Int)
 
@@ -26,14 +26,6 @@ showNumber :: Maybe Int -> String
 showNumber (Just n) = show n
 showNumber Nothing = "-"
 
-solvePuzzle :: Puzzle -> IO (Maybe Puzzle)
-solvePuzzle p = do
-            putStrLn $ showPuzzle p
-            if isFull p
-              then return $ Just p
-              else
-                sequenceUntilJust $ map solvePuzzle $ genSinglePermutations p
-
 readPuzzle :: IO Puzzle
 readPuzzle = do
   lines <- sequence $ take 9 $ repeat getLine
@@ -46,6 +38,18 @@ puzzleFromLines lines =
 
 toCell :: Char -> Maybe Int
 toCell n = if isHexDigit n then Just (digitToInt n) else Nothing
+
+solvePuzzle :: Puzzle -> IO (Maybe Puzzle)
+solvePuzzle p = do
+            putStrLn $ showPuzzle p
+            if isFull p
+              then return $ Just p
+              else
+                sequenceUntilJust $ map solvePuzzle $ genSinglePermutations p
+
+isFull :: Puzzle -> Bool
+isFull =
+  all isJust . toList
 
 -- Special case of sequenceUntilJust to collapse the Maybe (Maybe a)
 sequenceUntilJust :: Monad m => [m (Maybe b)] -> m (Maybe b)
@@ -60,21 +64,22 @@ sequenceUntil test (x:xs) = do
                             else sequenceUntil test xs
 
 genSinglePermutations p =
-  filter (checkValidity editLocation) $ permutations
+  catMaybes attempts
   where
     editLocation = findFirstEmpty p
-    permutations = map (setCellTo p editLocation) [1..9]
+    attempts = map (tryToFillCell editLocation p) [1..9]
 
-isFull :: Puzzle -> Bool
-isFull =
-  all isJust . toList
-
-checkValidity :: (Int, Int) -> Puzzle -> Bool
-checkValidity (x, y) p =
-  checkRow newNum (getRow x p) &&
-  checkRow newNum (getCol y p) &&
-  boxIsValid (getBox p x y) newNum
-  where newNum = fromMaybe (error "wut") $ getElem x y p
+tryToFillCell :: (Int, Int) -> Puzzle -> Int -> Maybe Puzzle
+tryToFillCell (x, y) p newVal =
+  let
+    isValid =
+      checkRow newVal (getRow x p) &&
+      checkRow newVal (getCol y p) &&
+      boxIsValid (getBox p x y) newVal
+  in
+    if isValid
+    then Just (setElem (Just newVal) (x, y) p)
+    else Nothing
 
 getBox :: Puzzle -> Int -> Int -> Matrix (Maybe Int)
 getBox p x y = submatrix startRow endRow startCol endCol p 
@@ -85,10 +90,10 @@ getBox p x y = submatrix startRow endRow startCol endCol p
     endCol = startCol + 2
 
 boxIsValid box val = 
-  1 == length (filter (== Just val) (toList box))
+  not $ any (== Just val) (toList box)
 
-checkRow :: Int -> Data.Vector.Vector (Maybe Int) -> Bool
-checkRow val row = length (Data.Vector.filter (== (Just val)) row) == 1
+checkRow :: Int -> Vec.Vector (Maybe Int) -> Bool
+checkRow val row = not $ any (== Just val) (Vec.toList row)
 
 findFirstEmpty :: Puzzle -> (Int, Int)
 findFirstEmpty p = fst $ head $ filter (isNothing . snd) $ map (getElemByPair p) listPairs
@@ -98,9 +103,6 @@ getElemByPair p (x, y) = ((x, y), getElem x y p)
 
 listPairs :: [(Int, Int)]
 listPairs = [(x, y) | x <- [1..9], y <- [1..9] ]
-
-setCellTo :: Puzzle -> (Int, Int) -> Int -> Puzzle
-setCellTo p loc value = setElem (Just value) loc p
 
 -- main = do
 --   p <- readPuzzle
