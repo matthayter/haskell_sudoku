@@ -5,39 +5,11 @@ import Data.Char
 import Control.Monad
 import qualified Data.Vector as Vec
 
-type Puzzle = Matrix (Maybe Int)
+import PuzzleIO
 
-puzzle = puzzleFromLines
-          ["7 5 - 8 9 1 - - -",
-           "- - 1 6 - - 9 8 -",
-           "- 9 - - - - 7 - -",
-           "1 4 - - 5 - 3 7 -",
-           "- 7 - - 3 - 6 1 4",
-           "- - 9 - - 4 5 - -",
-           "- - - - - - - 4 -",
-           "- 6 - 3 - 2 1 - -",
-           "2 - 3 - - 9 - 5 -"]
-
-showPuzzle = unlines . (map showRow) . toLists
-
-showRow = unwords . map showNumber
-
-showNumber :: Maybe Int -> String
-showNumber (Just n) = show n
-showNumber Nothing = "-"
-
-readPuzzle :: IO Puzzle
-readPuzzle = do
-  lines <- sequence $ take 9 $ repeat getLine
-  return $ puzzleFromLines lines
-
-puzzleFromLines lines =
-  let chars = filter (not . isSpace) $ unwords lines
-  in
-    fromList 9 9 $ map toCell chars
-
-toCell :: Char -> Maybe Int
-toCell n = if isHexDigit n then Just (digitToInt n) else Nothing
+main = do
+  p <- readPuzzle
+  solvePuzzle p
 
 solvePuzzle :: Puzzle -> IO (Maybe Puzzle)
 solvePuzzle p = do
@@ -103,8 +75,3 @@ getElemByPair p (x, y) = ((x, y), getElem x y p)
 
 listPairs :: [(Int, Int)]
 listPairs = [(x, y) | x <- [1..9], y <- [1..9] ]
-
-main = do
-  p <- readPuzzle
-  solvePuzzle p
--- main = solvePuzzle puzzle
