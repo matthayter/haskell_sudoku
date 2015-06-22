@@ -68,10 +68,9 @@ checkRow :: Int -> Vec.Vector (Maybe Int) -> Bool
 checkRow val row = not $ any (== Just val) (Vec.toList row)
 
 findFirstEmpty :: Puzzle -> (Int, Int)
-findFirstEmpty p = fst $ head $ filter (isNothing . snd) $ map (getElemByPair p) listPairs
+findFirstEmpty p = fromMaybe (error "None Empty") $ find (isEmpty p) listPairs
 
-getElemByPair :: Puzzle -> (Int, Int) -> ((Int, Int), Maybe Int)
-getElemByPair p (x, y) = ((x, y), getElem x y p)
+isEmpty p (x, y) = isNothing $ getElem x y p
 
 listPairs :: [(Int, Int)]
 listPairs = [(x, y) | x <- [1..9], y <- [1..9] ]
