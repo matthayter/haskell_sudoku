@@ -104,7 +104,7 @@ getElemByPair p (x, y) = ((x, y), getElem x y p)
 listPairs :: [(Int, Int)]
 listPairs = [(x, y) | x <- [1..9], y <- [1..9] ]
 
--- main = do
---   p <- readPuzzle
---   putStrLn $ showPuzzle p
-main = solvePuzzle puzzle
+main = do
+  p <- readPuzzle
+  solvePuzzle p
+-- main = solvePuzzle puzzle
